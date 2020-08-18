@@ -10,7 +10,7 @@ This extension is designed to let you view your exported Burp Suite history file
 4. Select Extension file *BurpXMLExportViewer.py*
 5. After loading the extension, a new tab called *Burp XML Export Viewer* should appear
 
-Within this tab, click on *Select Burp XML Export File* and select your exported Burp XML history file. Note that no base64 encoded XML history files are supported yet. Thus, you need to uncheck *Base64-encode requests and responses* when exporting your items from Burp's HTTP Proxy history. Base64 support may be added in the future.
+Within this tab, click on *Select Burp XML Export File* and select your exported Burp XML history file.
 
 # TODOs
 

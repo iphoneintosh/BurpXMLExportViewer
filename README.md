@@ -14,7 +14,7 @@ Within this tab, click on *Select Burp XML Export File* and select your exported
 
 # TODOs
 
-- [ ] Handle base64 encoded XML history files
+- [x] Handle base64 encoded XML history files
 - [ ] Edit data and export as new XML history file
 - [ ] Re-import XML history file into Burp Proxy
 

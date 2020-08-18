@@ -7,6 +7,7 @@ from burp import IHttpService
 
 from java.awt import BorderLayout
 from java.util import ArrayList
+from java.util import Base64
 
 from javax.swing import JScrollPane
 from javax.swing import JSplitPane
@@ -65,7 +66,7 @@ class BurpExtender(IBurpExtender, ITab, IMessageEditorController, AbstractTableM
 
 		# Set column width of table
 		self._logTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF)
-		self._logTable.getColumnModel().getColumn(0).setPreferredWidth(20)
+		self._logTable.getColumnModel().getColumn(0).setPreferredWidth(40)
 		self._logTable.getColumnModel().getColumn(1).setPreferredWidth(60)
 		self._logTable.getColumnModel().getColumn(2).setPreferredWidth(70)
 		self._logTable.getColumnModel().getColumn(3).setPreferredWidth(300)
@@ -125,10 +126,24 @@ class BurpExtender(IBurpExtender, ITab, IMessageEditorController, AbstractTableM
 		# All entries in Burp's XML Export File have tag <item>...</item>
 		nodeList = doc.getElementsByTagName("item")
 
-		for i in reversed(range(0, nodeList.getLength())):
+		# for i in reversed(range(0, nodeList.getLength())):
+		for i in range(0, nodeList.getLength()):
 			node = nodeList.item(i)
 			
 			if node.getNodeType() == Node.ELEMENT_NODE:
+				
+				request = node.getElementsByTagName("request").item(0).getTextContent()
+				response = node.getElementsByTagName("response").item(0).getTextContent()
+
+				request_isBase64 = node.getElementsByTagName("request").item(0).getAttribute("base64")
+				response_isBase64 = node.getElementsByTagName("response").item(0).getAttribute("base64")
+
+				if request_isBase64 == "true":
+					request = Base64.getDecoder().decode(request)
+
+				if response_isBase64 == "true":
+					response = Base64.getDecoder().decode(response)
+
 				info = {
 					"time" : node.getElementsByTagName("time").item(0).getTextContent(),
 					"url" : node.getElementsByTagName("url").item(0).getTextContent(),
@@ -138,11 +153,11 @@ class BurpExtender(IBurpExtender, ITab, IMessageEditorController, AbstractTableM
 					"method" : node.getElementsByTagName("method").item(0).getTextContent(),
 					"path" : node.getElementsByTagName("path").item(0).getTextContent(),
 					"extension" : node.getElementsByTagName("extension").item(0).getTextContent(),
-					"request" : node.getElementsByTagName("request").item(0).getTextContent(),
+					"request" : request,
 					"status" : node.getElementsByTagName("status").item(0).getTextContent(),
 					"responselength" : node.getElementsByTagName("responselength").item(0).getTextContent(),
 					"mimetype" : node.getElementsByTagName("mimetype").item(0).getTextContent(),
-					"response" : node.getElementsByTagName("response").item(0).getTextContent(),
+					"response" : response,
 					"comment" : node.getElementsByTagName("comment").item(0).getTextContent(),
 					"highlight" : ""
 				}
@@ -153,12 +168,12 @@ class BurpExtender(IBurpExtender, ITab, IMessageEditorController, AbstractTableM
 				# Path component usually looks like this: /some/path/index.html?q=foo&z=faa
 				info["path"] = info["path"].split("?")[0]
 
-				# Extract GET/POST parameters
+				# Extract GET parameters
 				params = []
 				for param in self._helpers.analyzeRequest(logEntry).getParameters():
-					if param.getType() == IParameter.PARAM_URL or param.getType() == IParameter.PARAM_BODY:
+					if param.getType() == IParameter.PARAM_URL:
 						params.append("{}={}".format(param.getName(), param.getValue()))
-				info["params"] = ", ".join(params)
+				info["params"] = "&".join(params)
 
 				self.addLogEntryToList(logEntry)
 
@@ -297,8 +312,8 @@ class LogEntry(IHttpRequestResponse):
 	def __init__(self, info):
 		self._info = info
 		self._httpService = HttpService(info["host"], info["port"], info["protocol"])
-		self._request = bytearray(info["request"], "utf8")
-		self._response = bytearray(info["response"], "utf8")
+		self._request = info["request"]
+		self._response = info["response"]
 		self._comment = info["comment"]
 		self._highlight = info["highlight"]
 
